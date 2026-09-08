@@ -1,0 +1,28 @@
+# Environnement de DEVELOPPEMENT.
+# Usage : docker compose up
+#
+# Le code source est monte en volume -> hot reload via ts-node-dev,
+# pas besoin de rebuilder l'image a chaque modification.
+# Pour la prod, voir docker-compose.prod.yml.
+
+services:
+  app:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: file:/app/data/dev.db
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - sqlite_data:/app/data
+      - uploads_data:/app/uploads
+    command: npm run dev
+
+volumes:
+  sqlite_data:
+  uploads_data:

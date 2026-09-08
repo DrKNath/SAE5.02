@@ -1,0 +1,31 @@
+{
+  "name": "instagram-clone",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clone d'Instagram - SAE 5.02 BUT RT3",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "gts lint",
+    "fix": "gts fix",
+    "test": "echo \"TODO: brancher le test runner (Jest/Vitest) choisi par l'equipe\" && exit 0",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.20.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.9",
+    "gts": "^5.3.1",
+    "prisma": "^5.20.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.5.4"
+  }
+}

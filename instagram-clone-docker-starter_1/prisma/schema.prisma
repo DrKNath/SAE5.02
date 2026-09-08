@@ -1,0 +1,20 @@
+// Schema Prisma - point de depart.
+// Chaque dev pourra ajouter ses modeles (Post, Comment, Like, Friendship, ...)
+// au fur et a mesure des sprints. Lancer `npm run prisma:migrate` apres
+// chaque modification pour generer une migration versionnee dans le repo.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
