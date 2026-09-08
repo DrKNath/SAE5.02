@@ -1,0 +1,29 @@
+{
+  "name": "vistagram",
+  "version": "0.1.0",
+  "description": "Réseau social — projet SCRUM IUT R&T",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "start": "node dist/src/server.js",
+    "dev": "tsx watch src/server.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.5.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.10.1",
+    "@vitest/coverage-v8": "^5.0.0",
+    "tsx": "^4.20.7",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0"
+  }
+}
