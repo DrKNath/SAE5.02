@@ -1,4 +1,6 @@
-# Vistagram — socle technique
+# Vistagram — SAE5.02
+
+Réseau social — projet SCRUM, IUT R&T Colmar.
 
 Squelette TDD du projet. Le domaine métier est écrit et testé ; l'API HTTP et
 le front restent à construire par-dessus.
