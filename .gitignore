@@ -1,7 +1,8 @@
 node_modules/
 dist/
-coverage/
-*.db
-*.db-wal
-*.db-shm
 .env
+*.log
+data/
+uploads/
+coverage/
+.DS_Store
