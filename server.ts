@@ -1,5 +1,5 @@
 import http from 'http';
-import { app } from './src/app';
+import { app } from './src/app.js';
 import { Server } from 'socket.io';
 
 const server = http.createServer(app);
