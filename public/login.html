@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Connexion — Vistagram</title>
+</head>
+<body>
+    <!-- Page temporaire : le design sera fait par un autre membre de l'équipe -->
+    <h1>Connexion</h1>
+
+    <form id="login-form">
+        <div>
+            <label for="email">Email</label><br />
+            <input type="email" id="email" name="email" required />
+        </div>
+        <div>
+            <label for="password">Mot de passe</label><br />
+            <input type="password" id="password" name="password" required />
+        </div>
+        <button type="submit">Se connecter</button>
+    </form>
+
+    <p id="message" style="color: red;"></p>
+    <p><a href="/register.html">Créer un compte</a></p>
+
+    <script>
+        const form = document.getElementById('login-form');
+        const messageEl = document.getElementById('message');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            messageEl.textContent = '';
+
+            const payload = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+            };
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    messageEl.textContent = (data.errors || ['Erreur inconnue.']).join(' ');
+                    return;
+                }
+
+                window.location.href = '/dashboard.html';
+            } catch (err) {
+                messageEl.textContent = "Impossible de contacter le serveur.";
+            }
+        });
+    </script>
+</body>
+</html>
