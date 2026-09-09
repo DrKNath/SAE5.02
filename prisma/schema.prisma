@@ -1,1 +1,127 @@
+datasource db {
+    provider = "sqlite"
+    url      = "file:./dev.db"
+}
 
+generator client {
+    provider = "prisma-client-js"
+}
+
+model User {
+    id        Int      @id @default(autoincrement())
+    email     String   @unique
+    username  String   @unique
+    password  String
+    avatar    String?
+    role      String   @default("USER") // "USER", "ADMIN", "MODERATOR"
+    createdAt DateTime @default(now())
+
+    // Relations sociales
+    posts    Post[]
+    comments Comment[]
+    likes    Like[]
+    reports  Report[]  @relation("Reporter")
+
+    friendshipsRequested Friendship[] @relation("UserRequests")
+    friendshipsReceived  Friendship[] @relation("FriendRequests")
+
+    // Relations Messagerie
+    conversations ConversationParticipant[]
+    messages      Message[]
+}
+
+model Post {
+    id         Int      @id @default(autoincrement())
+    content    String? // Description / texte du post
+    mediaUrl   String? // Image ou vidéo
+    visibility String   @default("PUBLIC") // PUBLIC, FRIENDS
+    userId     Int
+    createdAt  DateTime @default(now()) // Date et heure de publication
+
+    user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    comments Comment[]
+    likes    Like[]
+    reports  Report[]
+}
+
+model Friendship {
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    friendId  Int
+    status    String   @default("PENDING") // PENDING, ACCEPTED
+    createdAt DateTime @default(now())
+
+    user   User @relation("UserRequests", fields: [userId], references: [id], onDelete: Cascade)
+    friend User @relation("FriendRequests", fields: [friendId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, friendId])
+}
+
+model Conversation {
+    id        Int      @id @default(autoincrement())
+    title     String? // Nom du groupe (null si conversation privée)
+    isGroup   Boolean  @default(false)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    participants ConversationParticipant[]
+    messages     Message[]
+}
+
+model ConversationParticipant {
+    id             Int      @id @default(autoincrement())
+    conversationId Int
+    userId         Int
+    role           String   @default("MEMBER") // "MEMBER", "ADMIN"
+    joinedAt       DateTime @default(now())
+
+    conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+    user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([conversationId, userId])
+}
+
+model Message {
+    id             Int      @id @default(autoincrement())
+    content        String
+    senderId       Int
+    conversationId Int
+    createdAt      DateTime @default(now())
+
+    sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+    conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model Like {
+    id     Int @id @default(autoincrement())
+    userId Int
+    postId Int
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, postId])
+}
+
+model Comment {
+    id        Int      @id @default(autoincrement())
+    content   String
+    userId    Int
+    postId    Int
+    createdAt DateTime @default(now())
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Report {
+    id        Int      @id @default(autoincrement())
+    reason    String
+    status    String   @default("PENDING") // PENDING, RESOLVED
+    userId    Int
+    postId    Int?
+    createdAt DateTime @default(now())
+
+    reporter User  @relation("Reporter", fields: [userId], references: [id], onDelete: Cascade)
+    post     Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
