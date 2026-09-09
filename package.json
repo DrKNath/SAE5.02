@@ -1,0 +1,21 @@
+{
+  "name": "vistagram",
+  "version": "1.0.0",
+  "description": "Réseau social — projet SCRUM, IUT R&T Colmar.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DrKNath/Vistagram.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DrKNath/Vistagram/issues"
+  },
+  "homepage": "https://github.com/DrKNath/Vistagram#readme"
+}
