@@ -14,6 +14,5 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'API Vistagram fonctionnelle' });
 });
 
-// Les membres de l'équipe brancheront leurs modules ici :
 // app.use('/api/auth', authRouter);
 // app.use('/api/users', usersRouter);
