@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { authRouter } from './modules/auth/auth.routes.js';
+import { moderationRouter } from './modules/moderation/moderation.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,4 +25,5 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRouter);
+app.use('/api/moderation', moderationRouter);
 app.use('/api/users', usersRouter);

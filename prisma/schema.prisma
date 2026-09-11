@@ -13,7 +13,7 @@ model User {
     username  String   @unique
     password  String
     avatar    String?
-    role      String   @default("USER") // "USER", "ADMIN", "MODERATOR"
+    role      String   @default("USER") // "USER", "ADMIN", "SUPER_ADMIN"
     createdAt DateTime @default(now())
 
     // Relations sociales
@@ -35,6 +35,7 @@ model Post {
     content    String? // Description / texte du post
     mediaUrl   String? // Image ou vidéo
     visibility String   @default("PUBLIC") // PUBLIC, FRIENDS
+    isHidden   Boolean  @default(false) // Masqué par un administrateur (modération)
     userId     Int
     createdAt  DateTime @default(now()) // Date et heure de publication
 
