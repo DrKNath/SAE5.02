@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { prisma } from '../../config/db.js';
-import type { Role } from './moderation.types.js';
+import { prisma } from '../config/db.js';
+import type { Role } from '../modules/moderation/moderation.types.js';
 
 declare global {
     namespace Express {

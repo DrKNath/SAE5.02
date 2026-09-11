@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middlewares/auth.middleware.js';
-import { requireRole } from './role.middleware.js';
+import { requireRole } from '../../middlewares/role.middleware.js';
 import {
     reportContent,
     getReports,
