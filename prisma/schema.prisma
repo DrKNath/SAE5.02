@@ -14,6 +14,7 @@ model User {
     password  String
     avatar    String?
     role      String   @default("USER") // "USER", "ADMIN", "SUPER_ADMIN"
+    isBanned  Boolean  @default(false) // Compte banni par un super administrateur
     createdAt DateTime @default(now())
 
     // Relations sociales

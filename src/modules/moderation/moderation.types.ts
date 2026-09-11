@@ -14,3 +14,12 @@ export interface ReportResponse {
     status: ReportStatus;
     reportedBy: number;
 }
+
+export interface UserSummary {
+    id: number;
+    email: string;
+    username: string;
+    role: Role;
+    isBanned: boolean;
+    createdAt: Date;
+}

@@ -8,10 +8,12 @@
     <!-- Page temporaire : le design sera fait par un autre membre de l'équipe -->
     <h1>Tableau de bord</h1>
     <div id="content">Chargement...</div>
+    <p id="admin-link" style="display:none;"><a href="/admin-users.html">Gestion des utilisateurs (super admin)</a></p>
     <button id="logout-btn" style="display:none;">Se déconnecter</button>
 
     <script>
         const contentEl = document.getElementById('content');
+        const adminLinkEl = document.getElementById('admin-link');
         const logoutBtn = document.getElementById('logout-btn');
 
         async function loadUser() {
@@ -27,8 +29,12 @@
                 const user = data.user;
 
                 contentEl.innerHTML =
-                    '<p>Connecté en tant que <strong>' + user.username + '</strong> (' + user.email + ')</p>';
+                    '<p>Connecté en tant que <strong>' + user.username + '</strong> (' + user.email + ') — rôle : ' + user.role + '</p>';
                 logoutBtn.style.display = 'inline-block';
+
+                if (user.role === 'SUPER_ADMIN') {
+                    adminLinkEl.style.display = 'block';
+                }
             } catch (err) {
                 contentEl.textContent = "Impossible de contacter le serveur.";
             }

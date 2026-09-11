@@ -59,6 +59,10 @@ export async function loginUser(email: string, password: string): Promise<User> 
         throw new AuthError('Email ou mot de passe incorrect.', 401);
     }
 
+    if (user.isBanned) {
+        throw new AuthError('Ce compte a été banni.', 403);
+    }
+
     return user;
 }
 

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Gestion des utilisateurs — Vistagram</title>
+</head>
+<body>
+    <!-- Page temporaire : le design sera fait par un autre membre de l'équipe.
+         Réservée au super admin : bannir / débannir / donner des droits admin. -->
+    <h1>Gestion des utilisateurs</h1>
+    <p id="message"></p>
+
+    <table id="users-table" border="1" cellpadding="6" style="border-collapse: collapse; display: none;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom d'utilisateur</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="users-body"></tbody>
+    </table>
+
+    <script>
+        const messageEl = document.getElementById('message');
+        const tableEl = document.getElementById('users-table');
+        const bodyEl = document.getElementById('users-body');
+
+        async function apiCall(url, method) {
+            const response = await fetch(url, {
+                method,
+                credentials: 'include',
+            });
+            const data = await response.json();
+            return { ok: response.ok, status: response.status, data };
+        }
+
+        function renderUsers(users) {
+            bodyEl.innerHTML = '';
+
+            users.forEach((user) => {
+                const row = document.createElement('tr');
+
+                const banBtn = user.isBanned
+                    ? '<button data-action="unban" data-id="' + user.id + '">Débannir</button>'
+                    : '<button data-action="ban" data-id="' + user.id + '">Bannir</button>';
+
+                const roleBtn =
+                    user.role === 'SUPER_ADMIN'
+                        ? '<em>—</em>'
+                        : user.role === 'ADMIN'
+                          ? '<button data-action="demote" data-id="' + user.id + '">Retirer droits admin</button>'
+                          : '<button data-action="promote" data-id="' + user.id + '">Donner droits admin</button>';
+
+                row.innerHTML =
+                    '<td>' + user.id + '</td>' +
+                    '<td>' + user.username + '</td>' +
+                    '<td>' + user.email + '</td>' +
+                    '<td>' + user.role + '</td>' +
+                    '<td>' + (user.isBanned ? 'Banni' : 'Actif') + '</td>' +
+                    '<td>' + banBtn + ' ' + roleBtn + '</td>';
+
+                bodyEl.appendChild(row);
+            });
+        }
+
+        async function loadUsers() {
+            const result = await apiCall('/api/moderation/users', 'GET');
+
+            if (result.status === 401) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            if (result.status === 403) {
+                messageEl.textContent = 'Accès refusé : cette page est réservée au super administrateur.';
+                tableEl.style.display = 'none';
+                return;
+            }
+
+            if (!result.ok) {
+                messageEl.textContent = 'Erreur lors du chargement des utilisateurs.';
+                return;
+            }
+
+            messageEl.textContent = '';
+            tableEl.style.display = '';
+            renderUsers(result.data.users);
+        }
+
+        bodyEl.addEventListener('click', async (event) => {
+            const target = event.target;
+
+            if (!(target instanceof HTMLElement) || target.tagName !== 'BUTTON') {
+                return;
+            }
+
+            const action = target.getAttribute('data-action');
+            const id = target.getAttribute('data-id');
+
+            const result = await apiCall('/api/moderation/users/' + id + '/' + action, 'PATCH');
+
+            if (!result.ok) {
+                const errors = (result.data && result.data.errors) || ['Action impossible.'];
+                messageEl.textContent = errors.join(' ');
+                return;
+            }
+
+            messageEl.textContent = '';
+            loadUsers();
+        });
+
+        loadUsers();
+    </script>
+</body>
+</html>
