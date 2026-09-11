@@ -1,6 +1,6 @@
 import { prisma } from '../../config/db.js';
-import type { Report, Post } from '@prisma/client';
-import type { ReportResponse, ReportStatus } from './moderation.types.js';
+import type { Report, Post, User } from '@prisma/client';
+import type { ReportResponse, ReportStatus, Role, UserSummary } from './moderation.types.js';
 
 export class ModerationError extends Error {
     status: number;
@@ -22,6 +22,17 @@ export function toReportResponse(report: Report): ReportResponse {
         reason: report.reason,
         status: toReportStatus(report.status),
         reportedBy: report.userId,
+    };
+}
+
+export function toUserSummary(user: User): UserSummary {
+    return {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role as Role,
+        isBanned: user.isBanned,
+        createdAt: user.createdAt,
     };
 }
 
@@ -96,4 +107,66 @@ export async function deletePost(postId: number): Promise<void> {
     }
 
     await prisma.post.delete({ where: { id: postId } });
+}
+
+async function findUserOrThrow(userId: number): Promise<User> {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user) {
+        throw new ModerationError('Utilisateur introuvable.', 404);
+    }
+
+    return user;
+}
+
+export async function listUsers(): Promise<User[]> {
+    return prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
+}
+
+export async function banUser(targetId: number, requesterId: number): Promise<User> {
+    if (targetId === requesterId) {
+        throw new ModerationError('Impossible de vous bannir vous-même.', 400);
+    }
+
+    await findUserOrThrow(targetId);
+
+    return prisma.user.update({
+        where: { id: targetId },
+        data: { isBanned: true },
+    });
+}
+
+export async function unbanUser(targetId: number): Promise<User> {
+    await findUserOrThrow(targetId);
+
+    return prisma.user.update({
+        where: { id: targetId },
+        data: { isBanned: false },
+    });
+}
+
+export async function promoteToAdmin(targetId: number): Promise<User> {
+    const user = await findUserOrThrow(targetId);
+
+    if (user.role === 'SUPER_ADMIN') {
+        throw new ModerationError("Impossible de modifier le rôle d'un super administrateur.", 400);
+    }
+
+    return prisma.user.update({
+        where: { id: targetId },
+        data: { role: 'ADMIN' },
+    });
+}
+
+export async function demoteToUser(targetId: number): Promise<User> {
+    const user = await findUserOrThrow(targetId);
+
+    if (user.role === 'SUPER_ADMIN') {
+        throw new ModerationError("Impossible de modifier le rôle d'un super administrateur.", 400);
+    }
+
+    return prisma.user.update({
+        where: { id: targetId },
+        data: { role: 'USER' },
+    });
 }

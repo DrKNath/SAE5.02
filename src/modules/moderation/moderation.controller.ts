@@ -8,6 +8,12 @@ import {
     unhidePost,
     deletePost,
     toReportResponse,
+    listUsers,
+    banUser,
+    unbanUser,
+    promoteToAdmin,
+    demoteToUser,
+    toUserSummary,
     ModerationError,
 } from './moderation.js';
 import type { CreateReportInput, ReportStatus } from './moderation.types.js';
@@ -106,6 +112,87 @@ export async function deletePostHandler(req: Request, res: Response) {
     try {
         await deletePost(postId);
         return res.json({ status: 'OK', message: 'Post supprimé.' });
+    } catch (err) {
+        if (err instanceof ModerationError) {
+            return res.status(err.status).json({ status: 'ERROR', errors: [err.message] });
+        }
+        console.error(err);
+        return res.status(500).json({ status: 'ERROR', errors: ['Erreur serveur.'] });
+    }
+}
+
+export async function getUsers(_req: Request, res: Response) {
+    const users = await listUsers();
+    return res.json({ status: 'OK', users: users.map(toUserSummary) });
+}
+
+export async function banUserHandler(req: Request, res: Response) {
+    const targetId = Number(req.params.id);
+
+    if (!Number.isInteger(targetId)) {
+        return res.status(400).json({ status: 'ERROR', errors: ["Identifiant d'utilisateur invalide."] });
+    }
+
+    try {
+        const user = await banUser(targetId, req.userId as number);
+        return res.json({ status: 'OK', user: toUserSummary(user) });
+    } catch (err) {
+        if (err instanceof ModerationError) {
+            return res.status(err.status).json({ status: 'ERROR', errors: [err.message] });
+        }
+        console.error(err);
+        return res.status(500).json({ status: 'ERROR', errors: ['Erreur serveur.'] });
+    }
+}
+
+export async function unbanUserHandler(req: Request, res: Response) {
+    const targetId = Number(req.params.id);
+
+    if (!Number.isInteger(targetId)) {
+        return res.status(400).json({ status: 'ERROR', errors: ["Identifiant d'utilisateur invalide."] });
+    }
+
+    try {
+        const user = await unbanUser(targetId);
+        return res.json({ status: 'OK', user: toUserSummary(user) });
+    } catch (err) {
+        if (err instanceof ModerationError) {
+            return res.status(err.status).json({ status: 'ERROR', errors: [err.message] });
+        }
+        console.error(err);
+        return res.status(500).json({ status: 'ERROR', errors: ['Erreur serveur.'] });
+    }
+}
+
+export async function promoteUserHandler(req: Request, res: Response) {
+    const targetId = Number(req.params.id);
+
+    if (!Number.isInteger(targetId)) {
+        return res.status(400).json({ status: 'ERROR', errors: ["Identifiant d'utilisateur invalide."] });
+    }
+
+    try {
+        const user = await promoteToAdmin(targetId);
+        return res.json({ status: 'OK', user: toUserSummary(user) });
+    } catch (err) {
+        if (err instanceof ModerationError) {
+            return res.status(err.status).json({ status: 'ERROR', errors: [err.message] });
+        }
+        console.error(err);
+        return res.status(500).json({ status: 'ERROR', errors: ['Erreur serveur.'] });
+    }
+}
+
+export async function demoteUserHandler(req: Request, res: Response) {
+    const targetId = Number(req.params.id);
+
+    if (!Number.isInteger(targetId)) {
+        return res.status(400).json({ status: 'ERROR', errors: ["Identifiant d'utilisateur invalide."] });
+    }
+
+    try {
+        const user = await demoteToUser(targetId);
+        return res.json({ status: 'OK', user: toUserSummary(user) });
     } catch (err) {
         if (err instanceof ModerationError) {
             return res.status(err.status).json({ status: 'ERROR', errors: [err.message] });

@@ -8,6 +8,11 @@ import {
     hidePostHandler,
     unhidePostHandler,
     deletePostHandler,
+    getUsers,
+    banUserHandler,
+    unbanUserHandler,
+    promoteUserHandler,
+    demoteUserHandler,
 } from './moderation.controller.js';
 
 export const moderationRouter = Router();
@@ -21,3 +26,10 @@ moderationRouter.patch('/reports/:id/resolve', requireAuth, requireRole('ADMIN')
 moderationRouter.patch('/posts/:id/hide', requireAuth, requireRole('ADMIN'), hidePostHandler);
 moderationRouter.patch('/posts/:id/unhide', requireAuth, requireRole('ADMIN'), unhidePostHandler);
 moderationRouter.delete('/posts/:id', requireAuth, requireRole('ADMIN'), deletePostHandler);
+
+// Gestion des utilisateurs (bannir / débannir / droits admin) : réservée au super administrateur
+moderationRouter.get('/users', requireAuth, requireRole('SUPER_ADMIN'), getUsers);
+moderationRouter.patch('/users/:id/ban', requireAuth, requireRole('SUPER_ADMIN'), banUserHandler);
+moderationRouter.patch('/users/:id/unban', requireAuth, requireRole('SUPER_ADMIN'), unbanUserHandler);
+moderationRouter.patch('/users/:id/promote', requireAuth, requireRole('SUPER_ADMIN'), promoteUserHandler);
+moderationRouter.patch('/users/:id/demote', requireAuth, requireRole('SUPER_ADMIN'), demoteUserHandler);

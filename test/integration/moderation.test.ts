@@ -16,14 +16,29 @@ const adminUser = {
     password: 'motdepasse123',
 };
 
+const superAdminUser = {
+    email: 'test.moderation.superadmin@vistagram.local',
+    username: 'test_mod_superadmin',
+    password: 'motdepasse123',
+};
+
+const targetUser = {
+    email: 'test.moderation.target@vistagram.local',
+    username: 'test_mod_target',
+    password: 'motdepasse123',
+};
+
+const ALL_EMAILS = [normalUser.email, adminUser.email, superAdminUser.email, targetUser.email];
+
 let postId: number;
+let targetUserId: number;
 
 async function cleanup() {
     await prisma.report.deleteMany({
-        where: { post: { user: { email: { in: [normalUser.email, adminUser.email] } } } },
+        where: { post: { user: { email: { in: ALL_EMAILS } } } },
     });
-    await prisma.post.deleteMany({ where: { user: { email: { in: [normalUser.email, adminUser.email] } } } });
-    await prisma.user.deleteMany({ where: { email: { in: [normalUser.email, adminUser.email] } } });
+    await prisma.post.deleteMany({ where: { user: { email: { in: ALL_EMAILS } } } });
+    await prisma.user.deleteMany({ where: { email: { in: ALL_EMAILS } } });
 }
 
 async function loginAs(credentials: { email: string; password: string }) {
@@ -38,6 +53,16 @@ beforeAll(async () => {
     const user = await registerUser(normalUser.email, normalUser.username, normalUser.password);
     const admin = await registerUser(adminUser.email, adminUser.username, adminUser.password);
     await prisma.user.update({ where: { id: admin.id }, data: { role: 'ADMIN' } });
+
+    const superAdmin = await registerUser(
+        superAdminUser.email,
+        superAdminUser.username,
+        superAdminUser.password,
+    );
+    await prisma.user.update({ where: { id: superAdmin.id }, data: { role: 'SUPER_ADMIN' } });
+
+    const target = await registerUser(targetUser.email, targetUser.username, targetUser.password);
+    targetUserId = target.id;
 
     const post = await prisma.post.create({
         data: {
@@ -175,5 +200,105 @@ describe('Masquage / suppression de contenu (admin)', () => {
         const agent = await loginAs(adminUser);
         const response = await agent.patch(`/api/moderation/posts/${postId}/hide`);
         expect(response.status).toBe(404);
+    });
+});
+
+describe('Gestion des utilisateurs (réservée au super admin)', () => {
+    it('refuse à un utilisateur normal de lister les utilisateurs (403)', async () => {
+        const agent = await loginAs(normalUser);
+        const response = await agent.get('/api/moderation/users');
+        expect(response.status).toBe(403);
+    });
+
+    it("refuse à un administrateur (non super admin) d'accéder à la gestion des utilisateurs (403)", async () => {
+        const agent = await loginAs(adminUser);
+        const response = await agent.get('/api/moderation/users');
+        expect(response.status).toBe(403);
+    });
+
+    it('permet à un super admin de lister les utilisateurs', async () => {
+        const agent = await loginAs(superAdminUser);
+        const response = await agent.get('/api/moderation/users');
+
+        expect(response.status).toBe(200);
+        expect(Array.isArray(response.body.users)).toBe(true);
+        const found = response.body.users.find((u: any) => u.id === targetUserId);
+        expect(found).toBeDefined();
+        expect(found.password).toBeUndefined();
+    });
+
+    it('permet à un super admin de bannir un utilisateur', async () => {
+        const agent = await loginAs(superAdminUser);
+        const response = await agent.patch(`/api/moderation/users/${targetUserId}/ban`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.user.isBanned).toBe(true);
+    });
+
+    it('refuse la connexion à un compte banni', async () => {
+        const response = await request(app).post('/api/auth/login').send(targetUser);
+        expect(response.status).toBe(403);
+    });
+
+    it("coupe l'accès d'une session déjà ouverte quand l'utilisateur est banni entre-temps", async () => {
+        // Le compte cible est débanni temporairement pour ouvrir une session valide...
+        const superAgent = await loginAs(superAdminUser);
+        await superAgent.patch(`/api/moderation/users/${targetUserId}/unban`);
+
+        const targetAgent = await loginAs(targetUser);
+        const beforeBan = await targetAgent.get('/api/auth/me');
+        expect(beforeBan.status).toBe(200);
+
+        // ... puis re-banni pendant que la session est toujours active.
+        await superAgent.patch(`/api/moderation/users/${targetUserId}/ban`);
+
+        const afterBan = await targetAgent.get('/api/auth/me');
+        expect(afterBan.status).toBe(403);
+    });
+
+    it('permet à un super admin de débannir un utilisateur', async () => {
+        const agent = await loginAs(superAdminUser);
+        const response = await agent.patch(`/api/moderation/users/${targetUserId}/unban`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.user.isBanned).toBe(false);
+    });
+
+    it('refuse à un super admin de se bannir lui-même (400)', async () => {
+        const agent = await loginAs(superAdminUser);
+        const me = await agent.get('/api/auth/me');
+        const response = await agent.patch(`/api/moderation/users/${me.body.user.id}/ban`);
+        expect(response.status).toBe(400);
+    });
+
+    it('permet à un super admin de donner les droits admin à un utilisateur', async () => {
+        const agent = await loginAs(superAdminUser);
+        const response = await agent.patch(`/api/moderation/users/${targetUserId}/promote`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.user.role).toBe('ADMIN');
+    });
+
+    it('permet à un super admin de retirer les droits admin', async () => {
+        const agent = await loginAs(superAdminUser);
+        const response = await agent.patch(`/api/moderation/users/${targetUserId}/demote`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.user.role).toBe('USER');
+    });
+
+    it('refuse de modifier le rôle ou le bannissement d\'un super admin (400)', async () => {
+        const agent = await loginAs(superAdminUser);
+        const otherSuperAdmin = await registerUser(
+            'test.moderation.superadmin2@vistagram.local',
+            'test_mod_superadmin2',
+            'motdepasse123',
+        );
+        await prisma.user.update({ where: { id: otherSuperAdmin.id }, data: { role: 'SUPER_ADMIN' } });
+
+        const promoteResponse = await agent.patch(`/api/moderation/users/${otherSuperAdmin.id}/promote`);
+        expect(promoteResponse.status).toBe(400);
+
+        await prisma.user.delete({ where: { id: otherSuperAdmin.id } });
     });
 });
